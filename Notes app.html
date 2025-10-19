@@ -267,6 +267,10 @@
             margin-bottom: 15px;
             font-size: 14px;
         }
+
+        .sync-btn {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+        }
     </style>
 </head>
 <body>
@@ -326,6 +330,7 @@
                 <button class="save-btn" id="saveBtn">Save</button>
                 <button class="delete-btn" id="deleteBtn">Delete Note</button>
                 <button class="add-btn" id="addBtn">Add New Note</button>
+                <button class="sync-btn" id="syncBtn">Sync with GitHub</button>
                 <button class="change-password-btn" id="changePasswordBtn">GitHub Settings</button>
             </div>
             
@@ -416,6 +421,7 @@
         const saveBtn = document.getElementById('saveBtn');
         const deleteBtn = document.getElementById('deleteBtn');
         const addBtn = document.getElementById('addBtn');
+        const syncBtn = document.getElementById('syncBtn');
         const changePasswordBtn = document.getElementById('changePasswordBtn');
         const noteText = document.getElementById('noteText');
         const notesList = document.getElementById('notesList');
@@ -476,6 +482,7 @@
             saveBtn.addEventListener('click', saveNote);
             deleteBtn.addEventListener('click', deleteNote);
             addBtn.addEventListener('click', showNoteNameModal);
+            syncBtn.addEventListener('click', forceSyncWithGitHub);
             changePasswordBtn.addEventListener('click', showGitModal);
             saveGitConfigBtn.addEventListener('click', saveGitConfig);
             
@@ -626,18 +633,72 @@
                 
                 const data = await response.json();
                 const content = JSON.parse(atob(data.content));
-                notes = content.notes || [];
                 
-                // Update local storage cache
-                localStorage.setItem('notes', JSON.stringify(notes));
+                // Check if GitHub has notes but local doesn't
+                if (content.notes && content.notes.length > 0) {
+                    // GitHub has notes, check if we need to sync
+                    const localNotes = localStorage.getItem('notes');
+                    
+                    if (!localNotes || localNotes === '[]') {
+                        // Local storage is empty, use GitHub notes
+                        notes = content.notes;
+                        localStorage.setItem('notes', JSON.stringify(notes));
+                        updateSyncStatus('Notes loaded from GitHub');
+                    } else {
+                        // Both have notes, check which is newer
+                        const localNotesObj = JSON.parse(localNotes);
+                        const localLastModified = getLatestModification(localNotesObj);
+                        const gitLastModified = getLatestModification(content.notes);
+                        
+                        if (new Date(gitLastModified) > new Date(localLastModified)) {
+                            // GitHub has newer notes, use them
+                            notes = content.notes;
+                            localStorage.setItem('notes', JSON.stringify(notes));
+                            updateSyncStatus('Notes synced from GitHub (newer version)');
+                        } else {
+                            // Local has newer notes, push to GitHub
+                            notes = localNotesObj;
+                            await saveNotesToGitHub();
+                            updateSyncStatus('Notes pushed to GitHub (local was newer)');
+                        }
+                    }
+                } else {
+                    // GitHub has no notes, use local
+                    const localNotes = localStorage.getItem('notes');
+                    if (localNotes && localNotes !== '[]') {
+                        notes = JSON.parse(localNotes);
+                        await saveNotesToGitHub();
+                        updateSyncStatus('Notes pushed to GitHub');
+                    } else {
+                        notes = [];
+                        updateSyncStatus('No notes found');
+                    }
+                }
                 
                 renderNotesList();
-                updateSyncStatus('Synced with GitHub');
                 
             } catch (error) {
                 console.error('Error loading notes from GitHub:', error);
                 updateSyncStatus('Sync failed - using local cache');
+                
+                // Fallback to local storage
+                const localNotes = localStorage.getItem('notes');
+                if (localNotes) {
+                    notes = JSON.parse(localNotes);
+                    renderNotesList();
+                }
             }
+        }
+
+        // Helper function to get the latest modification date from notes
+        function getLatestModification(notesArray) {
+            if (!notesArray || notesArray.length === 0) return new Date(0).toISOString();
+            
+            return notesArray.reduce((latest, note) => {
+                const noteDate = new Date(note.lastModified || note.created || 0);
+                const latestDate = new Date(latest);
+                return noteDate > latestDate ? note.lastModified || note.created : latest;
+            }, notesArray[0].lastModified || notesArray[0].created);
         }
 
         async function saveNotesToGitHub() {
@@ -750,7 +811,12 @@
             syncStatus.textContent = message;
         }
 
-        // Notes Management (same as before but with GitHub integration)
+        // Force sync with GitHub
+        async function forceSyncWithGitHub() {
+            await loadNotesFromGitHub();
+        }
+
+        // Notes Management
         function renderNotesList() {
             notesList.innerHTML = '';
             
