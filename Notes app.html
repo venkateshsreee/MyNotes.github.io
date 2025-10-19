@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Notes App</title>
+    <title>Diwali Notes App</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,11 @@
         }
 
         body {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        url('https://images.unsplash.com/photo-1603383928972-0d6b0cac6dfb?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -23,29 +27,293 @@
 
         .container {
             width: 100%;
-            max-width: 600px;
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            max-width: 1200px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
             overflow: hidden;
+            display: flex;
+            min-height: 80vh;
         }
 
-        .login-container, .notes-container, .git-setup-container {
+        /* Sidebar Styles */
+        .sidebar {
+            width: 350px;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            padding: 25px;
+            color: white;
+            border-right: 3px solid #FFD700;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .sidebar-header h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            color: #FFD700;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .username-display {
+            font-size: 18px;
+            color: #FFF;
+            font-weight: 600;
+        }
+
+        .search-container {
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .search-box:focus {
+            outline: none;
+            box-shadow: 0 2px 15px rgba(255, 215, 0, 0.5);
+        }
+
+        .notes-list-container {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .notes-count {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 14px;
+            color: #FFD700;
+        }
+
+        .notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .note-item {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid #FFD700;
+            color: #333;
+        }
+
+        .note-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .note-item.active {
+            background: #FFD700;
+            color: #8B4513;
+            font-weight: 600;
+        }
+
+        .note-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .note-preview {
+            color: #666;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .note-date {
+            font-size: 11px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
             padding: 30px;
+            display: flex;
+            flex-direction: column;
         }
 
+        .main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .main-header h1 {
+            color: #8B4513;
+            font-size: 28px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .notes-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .notes-controls button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .notes-controls button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+        }
+
+        .change-password-btn {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .note-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .note-title-input {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .note-title-input:focus {
+            outline: none;
+            border-color: #8B4513;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: none;
+            background: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #8B4513;
+        }
+
+        .sync-status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+            padding: 8px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        /* Diwali Decoration */
+        .diwali-decoration {
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: linear-gradient(90deg, #FFD700, #FF8C00, #FFD700);
+            border-radius: 10px;
+            color: #8B4513;
+            font-weight: bold;
+            font-size: 14px;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px #FFD700;
+            }
+            to {
+                box-shadow: 0 0 20px #FF8C00, 0 0 30px #FFD700;
+            }
+        }
+
+        /* Login Page Styles */
         .login-container, .git-setup-container {
+            padding: 40px;
+            width: 100%;
+        }
+
+        .login-container {
             display: block;
+        }
+
+        .git-setup-container {
+            display: none;
         }
 
         .notes-container {
             display: none;
-        }
-
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            color: #333;
+            width: 100%;
         }
 
         .form-group {
@@ -69,14 +337,13 @@
         }
 
         input:focus {
-            border-color: #6a11cb;
+            border-color: #8B4513;
             outline: none;
         }
 
         button {
-            width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
             color: white;
             border: none;
             border-radius: 8px;
@@ -91,13 +358,6 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
-        button:disabled {
-            background: #95a5a6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
         .error-message {
             color: #e74c3c;
             text-align: center;
@@ -106,95 +366,7 @@
             display: none;
         }
 
-        .notes-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .notes-header h1 {
-            margin-bottom: 0;
-        }
-
-        .logout-btn {
-            width: auto;
-            padding: 8px 15px;
-            background: #e74c3c;
-        }
-
-        .notes-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .notes-controls button {
-            width: auto;
-            flex: 1;
-        }
-
-        .delete-btn {
-            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-        }
-
-        .add-btn {
-            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-        }
-
-        .change-password-btn {
-            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
-        }
-
-        textarea {
-            width: 100%;
-            height: 300px;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            resize: none;
-            margin-bottom: 20px;
-        }
-
-        .notes-list {
-            margin-top: 20px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .note-item {
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .note-item:hover {
-            background-color: #f9f9f9;
-        }
-
-        .note-item.active {
-            background-color: #e3f2fd;
-            border-color: #6a11cb;
-        }
-
-        .note-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: #333;
-        }
-
-        .note-preview {
-            color: #666;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
+        /* Modal Styles */
         .password-modal, .note-name-modal, .git-modal {
             display: none;
             position: fixed;
@@ -220,6 +392,7 @@
         .password-modal h2, .note-name-modal h2, .git-modal h2 {
             margin-bottom: 20px;
             text-align: center;
+            color: #8B4513;
         }
 
         .password-modal-buttons, .note-name-modal-buttons, .git-modal-buttons {
@@ -244,22 +417,6 @@
             display: none;
         }
 
-        .note-name-input {
-            margin-bottom: 15px;
-        }
-
-        .username-display {
-            color: #6a11cb;
-            font-weight: 700;
-        }
-
-        .sync-status {
-            text-align: center;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #666;
-        }
-
         .git-info {
             background: #f8f9fa;
             padding: 10px;
@@ -268,8 +425,22 @@
             font-size: 14px;
         }
 
-        .sync-btn {
-            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                max-width: 100%;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 3px solid #FFD700;
+            }
+            
+            .notes-list-container {
+                max-height: 200px;
+            }
         }
     </style>
 </head>
@@ -277,7 +448,7 @@
     <div class="container">
         <!-- Login Section -->
         <div class="login-container" id="loginContainer">
-            <h1>GitHub Notes App</h1>
+            <h1>🪔 Diwali Notes App</h1>
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" placeholder="Enter username">
@@ -288,10 +459,14 @@
             </div>
             <button id="loginBtn">Login</button>
             <div class="error-message" id="loginError">Invalid username or password!</div>
+            
+            <div class="diwali-decoration">
+                🪔 Happy Diwali! May this festival of lights bring joy to your life 🪔
+            </div>
         </div>
 
         <!-- Git Setup Section -->
-        <div class="git-setup-container" id="gitSetupContainer" style="display: none;">
+        <div class="git-setup-container" id="gitSetupContainer">
             <h1>GitHub Setup</h1>
             <div class="git-info">
                 <p><strong>To store notes in Git, you need:</strong></p>
@@ -317,32 +492,57 @@
 
         <!-- Notes Section -->
         <div class="notes-container" id="notesContainer">
-            <div class="notes-header">
-                <h1><span class="username-display" id="usernameDisplay">ADMIN</span>'s Notes</h1>
-                <button class="logout-btn" id="logoutBtn">Logout</button>
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h2>🪔 Diwali Notes</h2>
+                    <div class="username-display" id="usernameDisplay">ADMIN</div>
+                </div>
+                
+                <div class="search-container">
+                    <input type="text" class="search-box" id="searchBox" placeholder="Search notes...">
+                </div>
+                
+                <div class="notes-count" id="notesCount">0 notes</div>
+                
+                <div class="notes-list-container">
+                    <div class="notes-list" id="notesList">
+                        <!-- Notes will be listed here -->
+                    </div>
+                </div>
+                
+                <div class="diwali-decoration">
+                    Spread Joy &amp; Light 🌟
+                </div>
             </div>
             
-            <div class="sync-status" id="syncStatus">
-                <!-- Sync status will be shown here -->
-            </div>
-            
-            <div class="notes-controls">
-                <button class="save-btn" id="saveBtn">Save</button>
-                <button class="delete-btn" id="deleteBtn">Delete Note</button>
-                <button class="add-btn" id="addBtn">Add New Note</button>
-                <button class="sync-btn" id="syncBtn">Sync with GitHub</button>
-                <button class="change-password-btn" id="changePasswordBtn">GitHub Settings</button>
-            </div>
-            
-            <textarea id="noteText" placeholder="Start typing your note here..."></textarea>
-            
-            <div class="notes-list" id="notesList">
-                <!-- Notes will be listed here -->
+            <!-- Main Content -->
+            <div class="main-content">
+                <div class="main-header">
+                    <h1>Edit Note</h1>
+                    <button class="logout-btn" id="logoutBtn">Logout</button>
+                </div>
+                
+                <div class="sync-status" id="syncStatus">
+                    <!-- Sync status will be shown here -->
+                </div>
+                
+                <div class="notes-controls">
+                    <button class="save-btn" id="saveBtn">Save</button>
+                    <button class="delete-btn" id="deleteBtn">Delete Note</button>
+                    <button class="add-btn" id="addBtn">Add New Note</button>
+                    <button class="change-password-btn" id="changePasswordBtn">GitHub Settings</button>
+                </div>
+                
+                <div class="note-editor">
+                    <input type="text" class="note-title-input" id="noteTitle" placeholder="Note Title">
+                    <textarea id="noteText" placeholder="Start typing your note here..."></textarea>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Change Password Modal -->
+    <!-- Modals -->
     <div class="password-modal" id="passwordModal">
         <div class="password-modal-content">
             <h2>Change Password</h2>
@@ -367,23 +567,21 @@
         </div>
     </div>
 
-    <!-- Note Name Modal -->
     <div class="note-name-modal" id="noteNameModal">
         <div class="note-name-modal-content">
             <h2>Name Your Note</h2>
-            <div class="form-group note-name-input">
+            <div class="form-group">
                 <label for="noteName">Note Name</label>
                 <input type="text" id="noteName" placeholder="Enter note name">
             </div>
             <div class="error-message" id="noteNameError">Please enter a note name!</div>
             <div class="note-name-modal-buttons">
                 <button class="cancel-btn" id="cancelNoteName">Cancel</button>
-                <button id="confirmNoteName">Create Note</button>
+                    <button id="confirmNoteName">Create Note</button>
             </div>
         </div>
     </div>
 
-    <!-- GitHub Settings Modal -->
     <div class="git-modal" id="gitModal">
         <div class="git-modal-content">
             <h2>GitHub Settings</h2>
@@ -421,12 +619,14 @@
         const saveBtn = document.getElementById('saveBtn');
         const deleteBtn = document.getElementById('deleteBtn');
         const addBtn = document.getElementById('addBtn');
-        const syncBtn = document.getElementById('syncBtn');
         const changePasswordBtn = document.getElementById('changePasswordBtn');
         const noteText = document.getElementById('noteText');
+        const noteTitle = document.getElementById('noteTitle');
         const notesList = document.getElementById('notesList');
         const usernameDisplay = document.getElementById('usernameDisplay');
         const syncStatus = document.getElementById('syncStatus');
+        const searchBox = document.getElementById('searchBox');
+        const notesCount = document.getElementById('notesCount');
         
         // GitHub config elements
         const githubTokenInput = document.getElementById('githubToken');
@@ -445,6 +645,7 @@
         let currentNoteId = null;
         let currentUser = null;
         let gitConfig = null;
+        let filteredNotes = [];
 
         // Hardcoded credentials
         const HARDCODED_USERNAME = 'ADMIN';
@@ -473,7 +674,9 @@
             const savedNotes = localStorage.getItem('notes');
             if (savedNotes) {
                 notes = JSON.parse(savedNotes);
+                filteredNotes = [...notes];
                 renderNotesList();
+                updateNotesCount();
             }
 
             // Event listeners
@@ -482,9 +685,10 @@
             saveBtn.addEventListener('click', saveNote);
             deleteBtn.addEventListener('click', deleteNote);
             addBtn.addEventListener('click', showNoteNameModal);
-            syncBtn.addEventListener('click', forceSyncWithGitHub);
             changePasswordBtn.addEventListener('click', showGitModal);
             saveGitConfigBtn.addEventListener('click', saveGitConfig);
+            searchBox.addEventListener('input', handleSearch);
+            noteTitle.addEventListener('input', updateNoteTitle);
             
             // Initialize modals
             initModals();
@@ -507,6 +711,46 @@
             // Git modal
             document.getElementById('cancelGitConfig').addEventListener('click', () => gitModal.style.display = 'none');
             document.getElementById('saveModalGitConfig').addEventListener('click', saveModalGitConfig);
+        }
+
+        // Search functionality
+        function handleSearch() {
+            const searchTerm = searchBox.value.toLowerCase();
+            
+            if (searchTerm === '') {
+                filteredNotes = [...notes];
+            } else {
+                filteredNotes = notes.filter(note => 
+                    note.title.toLowerCase().includes(searchTerm) || 
+                    note.content.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            renderNotesList();
+            updateNotesCount();
+        }
+
+        // Update notes count
+        function updateNotesCount() {
+            const total = notes.length;
+            const showing = filteredNotes.length;
+            
+            if (total === showing) {
+                notesCount.textContent = `${total} note${total !== 1 ? 's' : ''}`;
+            } else {
+                notesCount.textContent = `${showing} of ${total} note${total !== 1 ? 's' : ''}`;
+            }
+        }
+
+        // Update note title
+        function updateNoteTitle() {
+            if (!currentNoteId) return;
+            
+            const noteIndex = notes.findIndex(n => n.id === currentNoteId);
+            if (noteIndex !== -1) {
+                notes[noteIndex].title = noteTitle.value;
+                renderNotesList();
+            }
         }
 
         // Login functionality
@@ -559,7 +803,7 @@
         function showNotesPage() {
             loginContainer.style.display = 'none';
             gitSetupContainer.style.display = 'none';
-            notesContainer.style.display = 'block';
+            notesContainer.style.display = 'flex';
             usernameDisplay.textContent = currentUser.username;
         }
 
@@ -633,72 +877,20 @@
                 
                 const data = await response.json();
                 const content = JSON.parse(atob(data.content));
+                notes = content.notes || [];
+                filteredNotes = [...notes];
                 
-                // Check if GitHub has notes but local doesn't
-                if (content.notes && content.notes.length > 0) {
-                    // GitHub has notes, check if we need to sync
-                    const localNotes = localStorage.getItem('notes');
-                    
-                    if (!localNotes || localNotes === '[]') {
-                        // Local storage is empty, use GitHub notes
-                        notes = content.notes;
-                        localStorage.setItem('notes', JSON.stringify(notes));
-                        updateSyncStatus('Notes loaded from GitHub');
-                    } else {
-                        // Both have notes, check which is newer
-                        const localNotesObj = JSON.parse(localNotes);
-                        const localLastModified = getLatestModification(localNotesObj);
-                        const gitLastModified = getLatestModification(content.notes);
-                        
-                        if (new Date(gitLastModified) > new Date(localLastModified)) {
-                            // GitHub has newer notes, use them
-                            notes = content.notes;
-                            localStorage.setItem('notes', JSON.stringify(notes));
-                            updateSyncStatus('Notes synced from GitHub (newer version)');
-                        } else {
-                            // Local has newer notes, push to GitHub
-                            notes = localNotesObj;
-                            await saveNotesToGitHub();
-                            updateSyncStatus('Notes pushed to GitHub (local was newer)');
-                        }
-                    }
-                } else {
-                    // GitHub has no notes, use local
-                    const localNotes = localStorage.getItem('notes');
-                    if (localNotes && localNotes !== '[]') {
-                        notes = JSON.parse(localNotes);
-                        await saveNotesToGitHub();
-                        updateSyncStatus('Notes pushed to GitHub');
-                    } else {
-                        notes = [];
-                        updateSyncStatus('No notes found');
-                    }
-                }
+                // Update local storage cache
+                localStorage.setItem('notes', JSON.stringify(notes));
                 
                 renderNotesList();
+                updateNotesCount();
+                updateSyncStatus('Synced with GitHub');
                 
             } catch (error) {
                 console.error('Error loading notes from GitHub:', error);
                 updateSyncStatus('Sync failed - using local cache');
-                
-                // Fallback to local storage
-                const localNotes = localStorage.getItem('notes');
-                if (localNotes) {
-                    notes = JSON.parse(localNotes);
-                    renderNotesList();
-                }
             }
-        }
-
-        // Helper function to get the latest modification date from notes
-        function getLatestModification(notesArray) {
-            if (!notesArray || notesArray.length === 0) return new Date(0).toISOString();
-            
-            return notesArray.reduce((latest, note) => {
-                const noteDate = new Date(note.lastModified || note.created || 0);
-                const latestDate = new Date(latest);
-                return noteDate > latestDate ? note.lastModified || note.created : latest;
-            }, notesArray[0].lastModified || notesArray[0].created);
         }
 
         async function saveNotesToGitHub() {
@@ -797,8 +989,10 @@
                 }
                 
                 notes = [];
+                filteredNotes = [];
                 localStorage.setItem('notes', JSON.stringify(notes));
                 renderNotesList();
+                updateNotesCount();
                 updateSyncStatus('Initialized notes repository');
                 
             } catch (error) {
@@ -811,30 +1005,33 @@
             syncStatus.textContent = message;
         }
 
-        // Force sync with GitHub
-        async function forceSyncWithGitHub() {
-            await loadNotesFromGitHub();
-        }
-
         // Notes Management
         function renderNotesList() {
             notesList.innerHTML = '';
             
-            if (notes.length === 0) {
-                notesList.innerHTML = '<div class="note-item" style="text-align: center; color: #666;">No notes yet. Click "Add New Note" to create one.</div>';
+            if (filteredNotes.length === 0) {
+                if (searchBox.value) {
+                    notesList.innerHTML = '<div class="note-item" style="text-align: center; color: #666;">No notes match your search.</div>';
+                } else {
+                    notesList.innerHTML = '<div class="note-item" style="text-align: center; color: #666;">No notes yet. Click "Add New Note" to create one.</div>';
+                }
                 return;
             }
             
-            notes.forEach(note => {
+            filteredNotes.forEach(note => {
                 const noteElement = document.createElement('div');
                 noteElement.className = 'note-item';
                 if (note.id === currentNoteId) {
                     noteElement.classList.add('active');
                 }
                 
+                const date = new Date(note.lastModified || note.created);
+                const formattedDate = date.toLocaleDateString();
+                
                 noteElement.innerHTML = `
                     <div class="note-title">${note.title || 'Untitled Note'}</div>
                     <div class="note-preview">${note.content.substring(0, 50)}${note.content.length > 50 ? '...' : ''}</div>
+                    <div class="note-date">${formattedDate}</div>
                 `;
                 
                 noteElement.addEventListener('click', () => selectNote(note.id));
@@ -846,6 +1043,7 @@
             currentNoteId = noteId;
             const note = notes.find(n => n.id === noteId);
             if (note) {
+                noteTitle.value = note.title || '';
                 noteText.value = note.content;
             }
             renderNotesList();
@@ -857,11 +1055,13 @@
             const noteIndex = notes.findIndex(n => n.id === currentNoteId);
             if (noteIndex !== -1) {
                 notes[noteIndex].content = noteText.value;
+                notes[noteIndex].title = noteTitle.value;
                 notes[noteIndex].lastModified = new Date().toISOString();
                 
                 // Save to GitHub
                 await saveNotesToGitHub();
                 renderNotesList();
+                updateNotesCount();
             }
         }
 
@@ -877,13 +1077,16 @@
             
             if (confirm('Are you sure you want to delete this note?')) {
                 notes = notes.filter(n => n.id !== currentNoteId);
+                filteredNotes = filteredNotes.filter(n => n.id !== currentNoteId);
                 
                 // Save to GitHub
                 await saveNotesToGitHub();
                 
                 currentNoteId = null;
+                noteTitle.value = '';
                 noteText.value = '';
                 renderNotesList();
+                updateNotesCount();
             }
         }
 
@@ -914,12 +1117,14 @@
             };
             
             notes.push(newNote);
+            filteredNotes.push(newNote);
             
             // Save to GitHub
             await saveNotesToGitHub();
             
             selectNote(newNote.id);
             renderNotesList();
+            updateNotesCount();
             hideNoteNameModal();
             noteText.focus();
         }
