@@ -190,10 +190,12 @@
             display: flex;
             gap: 12px;
             margin-bottom: 25px;
+            flex-wrap: wrap;
         }
 
         .notes-controls button {
             flex: 1;
+            min-width: 120px;
             padding: 12px;
             border: none;
             border-radius: 8px;
@@ -225,6 +227,11 @@
 
         .change-password-btn {
             background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+            color: white;
+        }
+
+        .github-settings-btn {
+            background: linear-gradient(135deg, #333 0%, #666 100%);
             color: white;
         }
 
@@ -441,6 +448,14 @@
             .notes-list-container {
                 max-height: 200px;
             }
+            
+            .notes-controls {
+                flex-direction: column;
+            }
+            
+            .notes-controls button {
+                min-width: auto;
+            }
         }
     </style>
 </head>
@@ -451,11 +466,11 @@
             <h1>🪔 Diwali Notes App</h1>
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" placeholder="Enter username">
+                <input type="text" id="username" placeholder="Enter username" value="ADMIN">
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" placeholder="Enter password">
+                <input type="password" id="password" placeholder="Enter password" value="ADMIN">
             </div>
             <button id="loginBtn">Login</button>
             <div class="error-message" id="loginError">Invalid username or password!</div>
@@ -531,7 +546,8 @@
                     <button class="save-btn" id="saveBtn">Save</button>
                     <button class="delete-btn" id="deleteBtn">Delete Note</button>
                     <button class="add-btn" id="addBtn">Add New Note</button>
-                    <button class="change-password-btn" id="changePasswordBtn">GitHub Settings</button>
+                    <button class="change-password-btn" id="changePasswordBtn">Change Password</button>
+                    <button class="github-settings-btn" id="githubSettingsBtn">GitHub Settings</button>
                 </div>
                 
                 <div class="note-editor">
@@ -542,7 +558,7 @@
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- Change Password Modal -->
     <div class="password-modal" id="passwordModal">
         <div class="password-modal-content">
             <h2>Change Password</h2>
@@ -558,7 +574,7 @@
                 <label for="confirmPassword">Confirm New Password</label>
                 <input type="password" id="confirmPassword" placeholder="Confirm new password">
             </div>
-            <div class="error-message" id="passwordError">Passwords do not match or current password is incorrect!</div>
+            <div class="error-message" id="passwordError"></div>
             <div class="success-message" id="passwordSuccess">Password changed successfully!</div>
             <div class="password-modal-buttons">
                 <button class="cancel-btn" id="cancelPasswordChange">Cancel</button>
@@ -567,6 +583,7 @@
         </div>
     </div>
 
+    <!-- Note Name Modal -->
     <div class="note-name-modal" id="noteNameModal">
         <div class="note-name-modal-content">
             <h2>Name Your Note</h2>
@@ -577,11 +594,12 @@
             <div class="error-message" id="noteNameError">Please enter a note name!</div>
             <div class="note-name-modal-buttons">
                 <button class="cancel-btn" id="cancelNoteName">Cancel</button>
-                    <button id="confirmNoteName">Create Note</button>
+                <button id="confirmNoteName">Create Note</button>
             </div>
         </div>
     </div>
 
+    <!-- GitHub Settings Modal -->
     <div class="git-modal" id="gitModal">
         <div class="git-modal-content">
             <h2>GitHub Settings</h2>
@@ -620,6 +638,7 @@
         const deleteBtn = document.getElementById('deleteBtn');
         const addBtn = document.getElementById('addBtn');
         const changePasswordBtn = document.getElementById('changePasswordBtn');
+        const githubSettingsBtn = document.getElementById('githubSettingsBtn');
         const noteText = document.getElementById('noteText');
         const noteTitle = document.getElementById('noteTitle');
         const notesList = document.getElementById('notesList');
@@ -647,12 +666,21 @@
         let gitConfig = null;
         let filteredNotes = [];
 
-        // Hardcoded credentials
-        const HARDCODED_USERNAME = 'ADMIN';
-        const HARDCODED_PASSWORD = 'ADMIN';
+        // Hardcoded credentials (initial)
+        let HARDCODED_USERNAME = 'ADMIN';
+        let HARDCODED_PASSWORD = 'ADMIN';
 
         // Initialize the app
         function init() {
+            // Load stored credentials
+            const storedUsername = localStorage.getItem('appUsername');
+            const storedPassword = localStorage.getItem('appPassword');
+            
+            if (storedUsername && storedPassword) {
+                HARDCODED_USERNAME = storedUsername;
+                HARDCODED_PASSWORD = storedPassword;
+            }
+
             // Check if user is already logged in
             const savedUser = localStorage.getItem('currentUser');
             const savedGitConfig = localStorage.getItem('gitConfig');
@@ -660,9 +688,15 @@
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 
+                // Check if GitHub config exists and is complete
                 if (savedGitConfig) {
                     gitConfig = JSON.parse(savedGitConfig);
-                    showNotesPage();
+                    if (gitConfig.token && gitConfig.repoName && gitConfig.repoOwner) {
+                        showNotesPage();
+                        loadNotesFromGitHub();
+                    } else {
+                        showGitSetupPage();
+                    }
                 } else {
                     showGitSetupPage();
                 }
@@ -685,18 +719,14 @@
             saveBtn.addEventListener('click', saveNote);
             deleteBtn.addEventListener('click', deleteNote);
             addBtn.addEventListener('click', showNoteNameModal);
-            changePasswordBtn.addEventListener('click', showGitModal);
+            changePasswordBtn.addEventListener('click', showPasswordModal);
+            githubSettingsBtn.addEventListener('click', showGitModal);
             saveGitConfigBtn.addEventListener('click', saveGitConfig);
             searchBox.addEventListener('input', handleSearch);
             noteTitle.addEventListener('input', updateNoteTitle);
             
             // Initialize modals
             initModals();
-            
-            // Load notes from GitHub if config exists
-            if (gitConfig) {
-                loadNotesFromGitHub();
-            }
         }
 
         function initModals() {
@@ -762,12 +792,16 @@
                 currentUser = { username, password };
                 localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 
-                // Check if GitHub config exists
+                // Check if GitHub config exists and is complete
                 const savedGitConfig = localStorage.getItem('gitConfig');
                 if (savedGitConfig) {
                     gitConfig = JSON.parse(savedGitConfig);
-                    showNotesPage();
-                    loadNotesFromGitHub();
+                    if (gitConfig.token && gitConfig.repoName && gitConfig.repoOwner) {
+                        showNotesPage();
+                        loadNotesFromGitHub();
+                    } else {
+                        showGitSetupPage();
+                    }
                 } else {
                     showGitSetupPage();
                 }
@@ -783,7 +817,7 @@
             currentUser = null;
             localStorage.removeItem('currentUser');
             showLoginPage();
-            usernameInput.value = '';
+            usernameInput.value = HARDCODED_USERNAME;
             passwordInput.value = '';
         }
 
@@ -798,6 +832,13 @@
             loginContainer.style.display = 'none';
             gitSetupContainer.style.display = 'block';
             notesContainer.style.display = 'none';
+            
+            // Pre-fill with existing config if available
+            if (gitConfig) {
+                githubTokenInput.value = gitConfig.token || '';
+                repoNameInput.value = gitConfig.repoName || '';
+                repoOwnerInput.value = gitConfig.repoOwner || '';
+            }
         }
 
         function showNotesPage() {
@@ -845,6 +886,63 @@
             setTimeout(() => {
                 gitModal.style.display = 'none';
                 loadNotesFromGitHub();
+            }, 1500);
+        }
+
+        // Password Change Functionality
+        function showPasswordModal() {
+            passwordModal.style.display = 'flex';
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('passwordError').style.display = 'none';
+            document.getElementById('passwordSuccess').style.display = 'none';
+        }
+
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value.trim();
+            const newPassword = document.getElementById('newPassword').value.trim();
+            const confirmPassword = document.getElementById('confirmPassword').value.trim();
+            
+            const passwordError = document.getElementById('passwordError');
+            
+            // Validate current password
+            if (currentPassword !== HARDCODED_PASSWORD) {
+                passwordError.textContent = 'Current password is incorrect!';
+                passwordError.style.display = 'block';
+                return;
+            }
+            
+            // Validate new password
+            if (newPassword.length < 3) {
+                passwordError.textContent = 'New password must be at least 3 characters long!';
+                passwordError.style.display = 'block';
+                return;
+            }
+            
+            // Check if passwords match
+            if (newPassword !== confirmPassword) {
+                passwordError.textContent = 'New passwords do not match!';
+                passwordError.style.display = 'block';
+                return;
+            }
+            
+            // Update password
+            HARDCODED_PASSWORD = newPassword;
+            
+            // Store new credentials
+            localStorage.setItem('appUsername', HARDCODED_USERNAME);
+            localStorage.setItem('appPassword', HARDCODED_PASSWORD);
+            
+            // Update current user session
+            currentUser.password = newPassword;
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            passwordError.style.display = 'none';
+            document.getElementById('passwordSuccess').style.display = 'block';
+            
+            setTimeout(() => {
+                passwordModal.style.display = 'none';
             }, 1500);
         }
 
@@ -1136,15 +1234,6 @@
             document.getElementById('modalRepoOwner').value = gitConfig?.repoOwner || '';
             document.getElementById('modalGitError').style.display = 'none';
             document.getElementById('modalGitSuccess').style.display = 'none';
-        }
-
-        function changePassword() {
-            // This is now just a demo function since we're using GitHub for storage
-            document.getElementById('passwordSuccess').style.display = 'block';
-            
-            setTimeout(() => {
-                passwordModal.style.display = 'none';
-            }, 1500);
         }
 
         // Initialize the app when the page loads
